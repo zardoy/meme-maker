@@ -1,3 +1,18 @@
 body {
     background: #fe01cb;
 }
+
+@font-face {
+    font-family: 'Flood Std Regular';
+    src: url('./Flood Std Regular.otf');
+}
+
+.title {
+    font-size: 76px;
+}
+
+@media (max-width: 600px) {
+    .title {
+        font-size: 46px;
+    }
+}

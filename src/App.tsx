@@ -34,6 +34,9 @@ export default function App() {
                 gap: 20,
             }}
         >
+            <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular' }} className="title">
+                {import.meta.env.VITE_APP_NAME}
+            </h1>
             <div
                 style={{
                     height: '100%',

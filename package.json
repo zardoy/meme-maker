@@ -1,6 +1,5 @@
 {
   "name": "meme-maker",
-  "displayName": "PRO Meme Maker",
   "license": "MIT",
   "dependencies": {
     "@floating-ui/react": "^0.26.13",
