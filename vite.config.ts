@@ -1,3 +1,7 @@
-import { defineVitConfig } from '@zardoy/vit';
+import { defineConfig } from 'vite'
+import pluginReact from '@vitejs/plugin-react'
 
-export default defineVitConfig({})
+export default defineConfig({
+    base: './',
+    plugins: [pluginReact()],
+})

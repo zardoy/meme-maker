@@ -1,6 +1,4 @@
 import { ComponentProps, useEffect, useRef, useState } from 'react'
-import AnimatedDiv from './AnimatedDiv'
-import Anime, { anime } from 'react-anime'
 import { motion } from 'framer-motion'
 import { Icon } from '@iconify/react'
 import mdiChevronLeft from '@iconify-icons/mdi/chevron-left'
@@ -10,23 +8,28 @@ import mdiDownload from '@iconify-icons/mdi/download'
 import mdiContentCopy from '@iconify-icons/mdi/content-copy'
 import mdiRestart from '@iconify-icons/mdi/restart'
 import mdiBlock from '@iconify-icons/mdi/block'
-import {} from 'valtio'
-import sampleJpg from './sample.jpg'
+import { proxy, useSnapshot } from 'valtio'
 import { noCase } from 'change-case'
+import assets from './assets.json'
+import { useFloating, arrow, offset, FloatingArrow } from '@floating-ui/react'
+import { randomSuperbWord } from 'superb'
+
+const selectedAssets = proxy(Object.fromEntries(assets.map(k => [k.category, undefined]))) as Record<string, string | undefined>
+let lastRenderedCanvas = null as HTMLCanvasElement | null
 
 export default function App() {
     return (
         <div
             style={{
                 fontSize: '22px',
-                color: '#522d10',
-                width: '100%',
+                color: '#ffb503',
+                textShadow: '0 0 5px rgba(0, 0, 0, 0.5)',
+                width: '100vw',
                 height: '100dvh',
-                background: 'rgb(140 255 140)',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                padding: '40px 20px',
+                // alignItems: 'center',
+                padding: '40px 10px',
                 fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
                 gap: 20,
             }}
@@ -58,85 +61,279 @@ export default function App() {
 }
 
 const Pickers = () => {
+    const tabs = assets.map(a => a.category)
+    const [tab, setTab] = useState(tabs[0])
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {['background', 'foreground', 'accent'].map(name => (
-                <PicturesPicker key={name} name={name} />
+            <Tabs tabs={tabs} selected={tab} changeSelected={setTab} />
+            {assets.map(({ category, urls }) => (
+                <PicturesPicker key={category} name={category} urls={urls} />
             ))}
         </div>
     )
 }
 
 const Canvas = () => {
+    const selectedAssetsVal = useSnapshot(selectedAssets)
     const ref = useRef<HTMLCanvasElement>(null)
-    const size = 400
+    const _size = 400
+
+    const [lastLayerOverride, setLastLayerOverride] = useState(null as null | { x: number; y: number })
+    const [mouseDown, setMouseDown] = useState(false)
 
     useEffect(() => {
-        const canvas = ref.current
-        const ctx = canvas!.getContext('2d')!
-
-        const dpr = window.devicePixelRatio || 1
-        canvas!.width = size * dpr
-        canvas!.height = size * dpr
-
-        ctx.clearRect(0, 0, canvas!.width, canvas!.height)
-        // ctx.fillStyle = 'red'
-        // ctx.fillRect(0, 0, canvas!.width, canvas!.height)
-        const img = new Image()
-        img.src = sampleJpg
-        img.onload = () => {
-            console.log(img.width)
-            ctx.drawImage(img, 0, 0, canvas!.width, canvas!.height)
+        if (lastLayerOverride) {
+            console.log(lastLayerOverride)
         }
-    }, [])
 
-    return <canvas ref={ref} style={{ width: size, height: size }} />
+        const abortController = new AbortController()
+        const draw = async () => {
+            const canvas = new OffscreenCanvas(1, 1)
+            const ctx = canvas!.getContext('2d')!
+
+            // const dpr = window.devicePixelRatio || 1
+            const dpr = 2 // todo
+            canvas!.width = _size * dpr
+            canvas!.height = _size * dpr
+
+            ctx.clearRect(0, 0, canvas!.width, canvas!.height)
+            // ctx.fillStyle = 'red'
+            // ctx.fillRect(0, 0, canvas!.width, canvas!.height)
+            const inFront = ['Background', 'Back Accessory']
+            const getOffset = url => {
+                if (url === 'bg.png') return { x: 15, y: 15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'animeface') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'beat_eyes') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'cheek') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'cute') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'cute_anime_eyes') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'cute_eyes') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'happy_eyes') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'heisenbeard') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'mask') return { x: -5, y: 0 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'mouth') return { x: -5, y: 0 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'smile') return { x: -5, y: 0 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'white_beard') return { x: -5, y: 0 }
+                // const override = assets.find(({ urls }) => urls.includes(url))?.offset
+                return { x: 0, y: 0 }
+            }
+            const images = [
+                ...inFront.map(x => selectedAssets[x]),
+                'bg.png',
+                ...Object.entries(selectedAssets)
+                    .filter(([k]) => !inFront.includes(k))
+                    .map(([k, v]) => v),
+            ]
+            console.debug(images)
+            for (const image of images) {
+                if (!image) continue
+                const img = new Image()
+                img.src = image
+                await new Promise<void>(resolve => {
+                    img.onload = () => {
+                        const { x, y } = (image === images[images.length - 1] ? lastLayerOverride : null) ?? getOffset(image)
+                        ctx.drawImage(img, x, y, canvas!.width, canvas!.height)
+                        resolve()
+                    }
+                })
+            }
+            ref.current!.width = canvas.width
+            ref.current!.height = canvas.height
+            ref.current!.getContext('2d')!.drawImage(canvas, 0, 0, canvas.width, canvas.height)
+            lastRenderedCanvas = ref.current!
+        }
+        draw()
+
+        return () => abortController.abort()
+    }, [selectedAssetsVal, lastLayerOverride])
+
+    return (
+        <canvas
+            ref={ref}
+            style={{ width: _size, height: _size }}
+            onMouseDown={e => {
+                if (e.altKey) {
+                    setMouseDown(true)
+                }
+            }}
+            onMouseMove={e => {
+                if (mouseDown) {
+                    const boundingClientRect = ref.current!.getBoundingClientRect()
+                    setLastLayerOverride({
+                        x: e.clientX - boundingClientRect.left - _size / 2,
+                        y: e.clientY - boundingClientRect.top,
+                    })
+                }
+            }}
+            onMouseUp={() => {
+                setMouseDown(false)
+            }}
+        />
+    )
 }
 
 const PictureControls = () => {
+    const functions = {
+        reset() {
+            for (const key in selectedAssets) {
+                selectedAssets[key] = undefined
+            }
+        },
+        randomize() {
+            for (const asset of assets) {
+                selectedAssets[asset.category] = asset.urls[Math.floor(Math.random() * asset.urls.length)]
+            }
+        },
+        download() {
+            const canvas = lastRenderedCanvas
+            if (!canvas) return
+            const link = document.createElement('a')
+            link.href = canvas.toDataURL('image/png')
+            link.download = `${randomSuperbWord()}_dog.png`
+            link.click()
+        },
+        copy() {
+            const canvas = lastRenderedCanvas
+            if (!canvas) return
+            canvas.toBlob(blob => {
+                navigator.clipboard.write([
+                    new ClipboardItem({
+                        'image/png': blob!,
+                    }),
+                ])
+            })
+        },
+    }
+
     return (
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', justifyContent: 'center' }}>
             <Canvas />
             <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
-                <Button icon={mdiRestart}>Reset</Button>
-                <Button icon={mdiShuffle}>Randomize</Button>
-                <Button icon={mdiContentCopy}>Copy</Button>
-                <Button icon={mdiDownload}>Download</Button>
+                <Button icon={mdiRestart} onClick={functions.reset}>
+                    Reset
+                </Button>
+                <Button icon={mdiShuffle} onClick={functions.randomize}>
+                    Randomize
+                </Button>
+                <Button icon={mdiContentCopy} onClick={functions.copy}>
+                    Copy to Clipboard
+                </Button>
+                <Button icon={mdiDownload} onClick={functions.download}>
+                    Download
+                </Button>
             </div>
         </div>
     )
 }
 
-const PicturesPicker = ({ name }) => {
+const Tabs = ({ tabs, selected, changeSelected }) => {
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, textTransform: 'uppercase' }}>
-            <span style={{ fontSize: '0.8em' }}>{noCase(name)}:</span>
+        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 0', justifyContent: 'center' }}>
+            {tabs.map((tab, i, tabs) => {
+                const isFirst = tab === tabs[0]
+                const isLast = tab === tabs[tabs.length - 1]
+                const isSelected = tab === selected
+                return (
+                    <Button
+                        key={tab}
+                        onClick={() => changeSelected(tab)}
+                        style={{
+                            // borderRadius: 0,
+                            borderTopLeftRadius: isFirst ? undefined : 0,
+                            borderBottomLeftRadius: isFirst ? undefined : 0,
+                            borderLeft: isFirst ? undefined : 'none',
+                            borderRight: isLast ? undefined : 'none',
+                            borderTopRightRadius: isLast ? undefined : 0,
+                            borderBottomRightRadius: isLast ? undefined : 0,
+                            transition: 'background 0.2s',
+                            background: !isSelected ? undefined : 'rgba(0, 0, 0, 0.3)',
+                        }}
+                    >
+                        {tab}
+                    </Button>
+                )
+            })}
+        </div>
+    )
+}
+
+const PicturesPicker = ({ name, urls }) => {
+    const selectedValue = useSnapshot(selectedAssets)[name]
+
+    return (
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                textTransform: 'uppercase',
+                overflow: 'auto',
+                width: '100%',
+                paddingTop: 10,
+                paddingBottom: 10,
+                paddingLeft: 10,
+                paddingRight: 10,
+            }}
+        >
+            <span style={{ fontSize: '0.9em' }}>{noCase(name)}:</span>
             <div style={{ display: 'flex', gap: 10 }}>
-                <Button>
+                {/* <Button>
                     <Icon icon={mdiChevronLeft} fontSize="1.5em" />
-                </Button>
-                {Array(4)
-                    .fill(0)
-                    .map((_, i) => (
-                        <Picker key={i} img={sampleJpg} />
-                    ))}
-                <Button>
+                </Button> */}
+                {urls.map((url, i) => {
+                    const isSelected = selectedValue === url
+                    return (
+                        <Picker
+                            selected={isSelected}
+                            key={i}
+                            img={url}
+                            onClick={() => {
+                                selectedAssets[name] = isSelected ? undefined : url
+                            }}
+                        />
+                    )
+                })}
+                {/* <Button>
                     <Icon icon={mdiChevronRight} fontSize="1.5em" />
-                </Button>
+                </Button> */}
             </div>
         </div>
     )
 }
 
-const Picker = ({ img }) => {
+const Picker = ({ img, onClick, selected }) => {
+    const ARROW_HEIGHT = 7
+    const GAP = 0
+
+    const [hovered, setHovered] = useState(false)
+
+    const arrowRef = useRef<any>(null)
+    const { refs, floatingStyles, context } = useFloating({
+        middleware: [
+            arrow({
+                element: arrowRef,
+            }),
+            offset(ARROW_HEIGHT + GAP),
+        ],
+        placement: 'top',
+    })
+
     return (
         <Button
             style={{
                 padding: 5,
                 width: 150,
                 zIndex: 1,
-                background: 'black',
+                background: 'none',
+                flexShrink: 0,
+                border: selected ? '2px solid lime' : '2px solid currentColor',
+                // background: 'black',
             }}
+            onClick={onClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            rootRef={refs.setReference}
         >
             {img ? (
                 <img
@@ -153,15 +350,35 @@ const Picker = ({ img }) => {
             ) : (
                 <Icon icon={mdiBlock} />
             )}
+            <div
+                ref={refs.setFloating}
+                style={{
+                    ...floatingStyles,
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    // fontSize: 8,
+                    pointerEvents: 'none',
+                    userSelect: 'text',
+                    padding: '2px 4px',
+                    opacity: hovered ? 1 : 0,
+                    transition: 'opacity 0.3s ease-in-out',
+                    textShadow: '1px 1px 2px BLACK',
+                    zIndex: 11,
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {img ? noCase(img.split('/').pop().split('.')[0]) : 'None'}
+                <FloatingArrow ref={arrowRef} context={context} style={{ opacity: 0.7 }}></FloatingArrow>
+            </div>
         </Button>
     )
 }
 
-const Button = ({ icon, ...props }: ComponentProps<typeof motion.button> & { icon? }) => {
+const Button = ({ icon, itemRef, rootRef, ...props }: ComponentProps<typeof motion.button> & { icon?; rootRef? }) => {
     return (
         <motion.button
             type="button"
             {...props}
+            ref={rootRef}
             whileHover={{
                 scale: 1.05,
                 transition: { duration: 0.1 },
@@ -172,20 +389,21 @@ const Button = ({ icon, ...props }: ComponentProps<typeof motion.button> & { ico
             style={{
                 position: 'relative',
                 display: 'flex',
-                gap: 5,
+                gap: 10,
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: 10,
-                backgroundColor: 'rgb(78 255 78)',
+                padding: '10px 20px',
+                backgroundColor: 'rgb(242 0 255)',
                 border: '2px solid currentColor',
-                borderRadius: 25,
+                borderRadius: 5,
                 textTransform: 'uppercase',
                 fontWeight: 'bold',
+                textShadow: 'inherit',
                 ...props.style,
             }}
         >
-            {icon && <Icon icon={icon} fontSize={'1.08em'} />}
             {props.children}
+            {icon && <Icon icon={icon} fontSize={'1.08em'} />}
         </motion.button>
     )
 }
