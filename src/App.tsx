@@ -16,6 +16,7 @@ import { randomSuperbWord } from 'superb'
 
 const selectedAssets = proxy(Object.fromEntries(assets.map(k => [k.category, undefined]))) as Record<string, string | undefined>
 let lastRenderedCanvas = null as HTMLCanvasElement | null
+let blob = null as Blob | null
 
 export default function App() {
     return (
@@ -148,6 +149,9 @@ const Canvas = () => {
             ref.current!.height = canvas.height
             ref.current!.getContext('2d')!.drawImage(canvas, 0, 0, canvas.width, canvas.height)
             lastRenderedCanvas = ref.current!
+            blob = await new Promise<Blob | null>(resolve => {
+                ref.current!.toBlob(resolve)
+            })
         }
         draw()
 
@@ -199,16 +203,20 @@ const PictureControls = () => {
             link.download = `${randomSuperbWord()}_dog.png`
             link.click()
         },
-        copy() {
+        async copy() {
             const canvas = lastRenderedCanvas
             if (!canvas) return
-            canvas.toBlob(blob => {
-                navigator.clipboard.write([
+            try {
+                if (!blob) throw new Error('no blob')
+                await navigator.clipboard.write([
                     new ClipboardItem({
-                        'image/png': blob!,
+                        [blob.type]: blob,
                     }),
                 ])
-            })
+            } catch (err) {
+                console.log(err)
+                alert('Failed to copy to clipboard :(')
+            }
         },
     }
 
