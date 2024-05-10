@@ -85,6 +85,7 @@ const Canvas = () => {
 
     const [lastLayerOverride, setLastLayerOverride] = useState(null as null | { x: number; y: number })
     const [mouseDown, setMouseDown] = useState(false)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         if (lastLayerOverride) {
@@ -93,6 +94,7 @@ const Canvas = () => {
 
         const abortController = new AbortController()
         const draw = async () => {
+            setLoading(true)
             const canvas = new OffscreenCanvas(1, 1)
             const ctx = canvas!.getContext('2d')!
 
@@ -145,6 +147,7 @@ const Canvas = () => {
                     }
                 })
             }
+            if (abortController.signal.aborted) return
             ref.current!.width = canvas.width
             ref.current!.height = canvas.height
             ref.current!.getContext('2d')!.drawImage(canvas, 0, 0, canvas.width, canvas.height)
@@ -152,6 +155,7 @@ const Canvas = () => {
             blob = await new Promise<Blob | null>(resolve => {
                 ref.current!.toBlob(resolve)
             })
+            setLoading(false)
         }
         draw()
 
@@ -159,27 +163,30 @@ const Canvas = () => {
     }, [selectedAssetsVal, lastLayerOverride])
 
     return (
-        <canvas
-            ref={ref}
-            style={{ width: _size, height: _size }}
-            onMouseDown={e => {
-                if (e.altKey) {
-                    setMouseDown(true)
-                }
-            }}
-            onMouseMove={e => {
-                if (mouseDown) {
-                    const boundingClientRect = ref.current!.getBoundingClientRect()
-                    setLastLayerOverride({
-                        x: e.clientX - boundingClientRect.left - _size / 2,
-                        y: e.clientY - boundingClientRect.top,
-                    })
-                }
-            }}
-            onMouseUp={() => {
-                setMouseDown(false)
-            }}
-        />
+        <div style={{ position: 'relative' }}>
+            <canvas
+                ref={ref}
+                style={{ width: _size, height: _size }}
+                onMouseDown={e => {
+                    if (e.altKey) {
+                        setMouseDown(true)
+                    }
+                }}
+                onMouseMove={e => {
+                    if (mouseDown) {
+                        const boundingClientRect = ref.current!.getBoundingClientRect()
+                        setLastLayerOverride({
+                            x: e.clientX - boundingClientRect.left - _size / 2,
+                            y: e.clientY - boundingClientRect.top,
+                        })
+                    }
+                }}
+                onMouseUp={() => {
+                    setMouseDown(false)
+                }}
+            />
+            {loading && <div style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 16 }}>Loading...</div>}
+        </div>
     )
 }
 
