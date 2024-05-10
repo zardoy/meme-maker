@@ -1,4 +1,4 @@
-import { ComponentProps, useEffect, useRef, useState } from 'react'
+import { ComponentProps, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Icon } from '@iconify/react'
 import mdiChevronLeft from '@iconify-icons/mdi/chevron-left'
@@ -67,12 +67,12 @@ const Pickers = () => {
     const tabs = assets.map(a => a.category)
     const [tab, setTab] = useState(tabs[0])
 
+    const currentAssets = useMemo(() => assets.find(({ category }) => category === tab), [tab])
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', width: '100%' }}>
             <Tabs tabs={tabs} selected={tab} changeSelected={setTab} />
-            {assets.map(({ category, urls }) => (
-                <PicturesPicker key={category} name={category} urls={urls} />
-            ))}
+            {currentAssets && <PicturesPicker name={currentAssets.category} urls={currentAssets.urls} />}
         </div>
     )
 }
@@ -104,15 +104,17 @@ const Canvas = () => {
             // ctx.fillStyle = 'red'
             // ctx.fillRect(0, 0, canvas!.width, canvas!.height)
             const inFront = ['Background', 'Back Accessory']
+            const inBack = ['Front Accessory', 'Face']
             const getOffset = url => {
                 if (url === 'bg.png') return { x: 15, y: 15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'ans') return { x: 0, y: -20 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'animeface') return { x: -15, y: -15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'beat_eyes') return { x: -15, y: -15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'cheek') return { x: -15, y: -15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'cute') return { x: -15, y: -15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'cute_anime_eyes') return { x: -15, y: -15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'cute_eyes') return { x: -15, y: -15 }
-                if (url.split('/').pop().split('.')[0].toLowerCase() === 'happy_eyes') return { x: -15, y: -15 }
+                if (url.split('/').pop().split('.')[0].toLowerCase() === 'happy_eyes') return { x: -15, y: -17 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'heisenbeard') return { x: -15, y: -15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'mask') return { x: -5, y: 0 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'mouth') return { x: -5, y: 0 }
@@ -125,8 +127,9 @@ const Canvas = () => {
                 ...inFront.map(x => selectedAssets[x]),
                 'bg.png',
                 ...Object.entries(selectedAssets)
-                    .filter(([k]) => !inFront.includes(k))
+                    .filter(([k]) => !inFront.includes(k) && !inBack.includes(k))
                     .map(([k, v]) => v),
+                ...inBack.map(x => selectedAssets[x]),
             ]
             console.debug(images)
             for (const image of images) {
@@ -232,7 +235,7 @@ const PictureControls = () => {
 
 const Tabs = ({ tabs, selected, changeSelected }) => {
     return (
-        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 0', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 0', width: '100%' }}>
             {tabs.map((tab, i, tabs) => {
                 const isFirst = tab === tabs[0]
                 const isLast = tab === tabs[tabs.length - 1]
@@ -322,6 +325,20 @@ const Picker = ({ img, onClick, selected }) => {
         placement: 'top',
     })
 
+    useEffect(() => {
+        if (selected) {
+            const ref = refs.reference.current as HTMLButtonElement
+            // scroll only X
+            const parent = ref.parentElement!.parentElement!
+            const left = ref.offsetLeft - parent.offsetWidth / 2 + ref.offsetWidth / 2
+            parent.scrollTo({
+                left,
+                behavior: 'smooth',
+            })
+            context.update()
+        }
+    }, [selected])
+
     return (
         <Button
             style={{
@@ -370,7 +387,7 @@ const Picker = ({ img, onClick, selected }) => {
                 }}
             >
                 {img ? noCase(img.split('/').pop().split('.')[0]) : 'None'}
-                <FloatingArrow ref={arrowRef} context={context} style={{ opacity: 0.7 }}></FloatingArrow>
+                <FloatingArrow ref={arrowRef} context={context} style={{ opacity: 0.7 }} />
             </div>
         </Button>
     )
