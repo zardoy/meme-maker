@@ -1,5 +1,6 @@
 body {
     background: #fe01cb;
+    scrollbar-width: thin;
 }
 
 @font-face {
@@ -15,4 +16,18 @@ body {
     .title {
         font-size: 46px;
     }
+}
+
+/* add pink scrollbars */
+
+::-webkit-scrollbar {
+    width: 11px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgb(255, 0, 204);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c100c1;
 }
