@@ -14,6 +14,9 @@ import { noCase } from 'change-case'
 import assets from './assets.json'
 import { useFloating, arrow, offset, FloatingArrow } from '@floating-ui/react'
 import { randomSuperbWord } from 'superb'
+import { SiX, SiTelegram } from '@icons-pack/react-simple-icons'
+import DextoolsLogo from './dextools.svg?react'
+import ImageDexscreener from './dexscreener.png'
 
 const selectedAssets = proxy(Object.fromEntries(assets.map(k => [k.category, undefined]))) as Record<string, string | undefined>
 let lastRenderedCanvas = null as HTMLCanvasElement | null
@@ -36,8 +39,39 @@ export default function App() {
                 gap: 0,
             }}
         >
-            <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular', lineHeight: 1 }} className="title">
+            <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular', lineHeight: 0.5, marginTop: 20 }} className="title">
                 {import.meta.env.VITE_APP_NAME}
+                <div style={{ display: 'inline-flex', gap: 10, fontSize: '18px', alignItems: 'center', fontFamily: 'monospace' }}>
+                    <span
+                        onClick={e => {
+                            // copy contents
+                            const el = e.target as HTMLSpanElement
+                            const range = document.createRange()
+                            range.selectNode(el)
+                            window.getSelection()!.removeAllRanges()
+                            window.getSelection()!.addRange(range)
+                            document.execCommand('copy')
+                        }}
+                    >
+                        3JRTNF3WuoxK4CLTE6KC5X8iDyoJEkBBUFBq4xz7yW1w
+                    </span>
+                    <Link icon href={'https://x.com/DogMemeToken?t=Srudx5CHz2awSHN296IseA&s=35'} title="X">
+                        <SiX />
+                    </Link>
+                    <Link icon href={'https://t.me/Dogtokenmeme'} title="Telegram">
+                        <SiTelegram />
+                    </Link>
+                    <Link icon href={'https://dexscreener.com/solana/dq37wwgg5lvxk2ohpa7styq8pc7dyddtquxysw3d2bho'} title="Dexscreener">
+                        <img src={ImageDexscreener} />
+                    </Link>
+                    <Link
+                        icon
+                        href={'https://www.dextools.io/app/en/solana/pair-explorer/Dq37wwgg5LvXk2oHpA7sTyQ8pc7DyddTquXysw3D2BHo?t=1715715809486'}
+                        title="Dextools"
+                    >
+                        <DextoolsLogo />
+                    </Link>
+                </div>
             </h1>
             <div>
                 <PictureControls />
@@ -59,6 +93,14 @@ export default function App() {
     // return <Anime opacity={[0, 1]} translateY={['-1rem', 0]} duration={2000} easing="easeOutExpo" delay={anime.stagger(100)} loop={true}>
     //     <Button>Test</Button>
     // </Anime>
+}
+
+const Link = ({ href, children, title = '', icon = false }) => {
+    return (
+        <a href={href} target="_blank" title={title} rel="noreferrer noopener" className={icon ? 'small-icon' : ''}>
+            {children}
+        </a>
+    )
 }
 
 const Pickers = () => {

@@ -12,6 +12,16 @@ body {
     font-size: 76px;
 }
 
+.small-icon {
+    width: 25px;
+    height: 25px;
+}
+
+.small-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
 @media (max-width: 600px) {
     .title {
         font-size: 46px;
