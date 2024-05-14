@@ -23,7 +23,7 @@ export default function App() {
     return (
         <div
             style={{
-                fontSize: '22px',
+                fontSize: '20px',
                 color: '#ffb503',
                 textShadow: '0 0 5px rgba(0, 0, 0, 0.5)',
                 // width: '100vw',
@@ -33,10 +33,10 @@ export default function App() {
                 // alignItems: 'center',
                 padding: '40px 10px',
                 fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                gap: 15,
+                gap: 0,
             }}
         >
-            <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular' }} className="title">
+            <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular', lineHeight: 1 }} className="title">
                 {import.meta.env.VITE_APP_NAME}
             </h1>
             <div>
@@ -80,7 +80,7 @@ const Pickers = () => {
 const Canvas = () => {
     const selectedAssetsVal = useSnapshot(selectedAssets)
     const ref = useRef<HTMLCanvasElement>(null)
-    const _size = 400
+    const _size = 300
 
     const [lastLayerOverride, setLastLayerOverride] = useState(null as null | { x: number; y: number })
     const [mouseDown, setMouseDown] = useState(false)
@@ -249,7 +249,7 @@ const PictureControls = () => {
 
 const Tabs = ({ tabs, selected, changeSelected }) => {
     return (
-        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 0' }}>
+        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 5px' }}>
             {tabs.map((tab, i, tabs) => {
                 const isFirst = tab === tabs[0]
                 const isLast = tab === tabs[tabs.length - 1]
@@ -280,44 +280,70 @@ const Tabs = ({ tabs, selected, changeSelected }) => {
 
 const PicturesPicker = ({ name, urls }) => {
     const selectedValue = useSnapshot(selectedAssets)[name]
+    const container = useRef<HTMLDivElement>(null!)
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(false)
+
+    const scroll = (direction: 'left' | 'right') => {
+        const ref = container.current
+        const scrollAmount = 200
+        ref.scrollTo({
+            left: direction === 'left' ? ref.scrollLeft - scrollAmount : ref.scrollLeft + scrollAmount,
+            behavior: 'smooth',
+        })
+    }
+
+    const onScroll = () => {
+        const ref = container.current
+        setCanScrollLeft(ref.scrollLeft > 0)
+        setCanScrollRight(ref.scrollLeft + ref.offsetWidth < ref.scrollWidth)
+    }
+
+    useEffect(() => {
+        onScroll()
+    }, [])
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-                textTransform: 'uppercase',
-                overflow: 'auto',
-                width: '100%',
-                paddingTop: 10,
-                paddingBottom: 10,
-                paddingLeft: 10,
-                paddingRight: 10,
-            }}
-        >
-            <span style={{ fontSize: '0.9em' }}>{noCase(name)}:</span>
-            <div style={{ display: 'flex', gap: 10 }}>
-                {/* <Button>
-                    <Icon icon={mdiChevronLeft} fontSize="1.5em" />
-                </Button> */}
-                {urls.map((url, i) => {
-                    const isSelected = selectedValue === url
-                    return (
-                        <Picker
-                            selected={isSelected}
-                            key={i}
-                            img={url}
-                            onClick={() => {
-                                selectedAssets[name] = isSelected ? undefined : url
-                            }}
-                        />
-                    )
-                })}
-                {/* <Button>
-                    <Icon icon={mdiChevronRight} fontSize="1.5em" />
-                </Button> */}
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center', width: '100%', height: '100%' }}>
+            <Button onClick={() => scroll('left')} disabled={!canScrollLeft} style={{ height: '150px', marginTop: 20, touchAction: 'manipulation' }}>
+                <Icon icon={mdiChevronLeft} fontSize="1.5em" />
+            </Button>
+            <div
+                ref={container}
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    textTransform: 'uppercase',
+                    overflow: 'auto',
+                    width: '100%',
+                    paddingTop: 10,
+                    paddingBottom: 10,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                }}
+                onScroll={onScroll}
+            >
+                <span style={{ fontSize: '0.9em' }}>{noCase(name)}:</span>
+                <div style={{ display: 'flex', gap: 10 }}>
+                    {urls.map((url, i) => {
+                        const isSelected = selectedValue === url
+                        return (
+                            <Picker
+                                selected={isSelected}
+                                key={i}
+                                img={url}
+                                onClick={() => {
+                                    selectedAssets[name] = isSelected ? undefined : url
+                                }}
+                            />
+                        )
+                    })}
+                </div>
             </div>
+            <Button onClick={() => scroll('right')} disabled={!canScrollRight} style={{ height: '150px', marginTop: 20, touchAction: 'manipulation' }}>
+                <Icon icon={mdiChevronRight} fontSize="1.5em" />
+            </Button>
         </div>
     )
 }
@@ -421,11 +447,12 @@ const Picker = ({ img, onClick, selected }) => {
     )
 }
 
-const Button = ({ icon, itemRef, rootRef, ...props }: ComponentProps<typeof motion.button> & { icon?; rootRef? }) => {
+const Button = ({ icon, itemRef, rootRef, disabled, ...props }: ComponentProps<typeof motion.button> & { icon?; rootRef? }) => {
     return (
         <motion.button
             type="button"
             {...props}
+            disabled={disabled}
             ref={rootRef}
             whileHover={{
                 scale: 1.05,
@@ -447,6 +474,7 @@ const Button = ({ icon, itemRef, rootRef, ...props }: ComponentProps<typeof moti
                 textTransform: 'uppercase',
                 fontWeight: 'bold',
                 textShadow: 'inherit',
+                opacity: disabled ? 0.5 : 1,
                 ...props.style,
             }}
         >
