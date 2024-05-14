@@ -39,9 +39,21 @@ export default function App() {
                 gap: 0,
             }}
         >
-            <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular', lineHeight: 0.5, marginTop: 20 }} className="title">
+            <h1
+                style={{
+                    textAlign: 'center',
+                    fontFamily: 'Flood Std Regular',
+                    lineHeight: 0.6,
+                    marginTop: 20,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    alignItems: 'center',
+                }}
+                className="title"
+            >
                 {import.meta.env.VITE_APP_NAME}
-                <div style={{ display: 'inline-flex', gap: 10, fontSize: '18px', alignItems: 'center', fontFamily: 'monospace' }}>
+                <div style={{ display: 'inline-flex', gap: 10, fontSize: '17px', alignItems: 'center', fontFamily: 'monospace' }}>
                     <span
                         onClick={e => {
                             // copy contents
