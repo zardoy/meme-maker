@@ -8,6 +8,7 @@ import mdiDownload from '@iconify-icons/mdi/download'
 import mdiContentCopy from '@iconify-icons/mdi/content-copy'
 import mdiRestart from '@iconify-icons/mdi/restart'
 import mdiBlock from '@iconify-icons/mdi/block'
+import mdiSelect from '@iconify-icons/mdi/check-bold'
 import { proxy, useSnapshot } from 'valtio'
 import { noCase } from 'change-case'
 import assets from './assets.json'
@@ -105,7 +106,7 @@ const Canvas = () => {
             // ctx.fillStyle = 'red'
             // ctx.fillRect(0, 0, canvas!.width, canvas!.height)
             const inFront = ['Background', 'Back Accessory']
-            const inBack = ['Front Accessory', 'Face']
+            const inBack = ['Front Accessory', 'Face', 'Hat']
             const getOffset = url => {
                 if (url === 'bg.png') return { x: 15, y: 15 }
                 if (url.split('/').pop().split('.')[0].toLowerCase() === 'ans') return { x: 0, y: -20 }
@@ -362,12 +363,26 @@ const Picker = ({ img, onClick, selected }) => {
                 flexShrink: 0,
                 border: selected ? '2px solid lime' : '2px solid currentColor',
                 // background: 'black',
+                position: 'relative',
             }}
             onClick={onClick}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             rootRef={refs.setReference}
         >
+            {selected && (
+                <Icon
+                    icon={mdiSelect}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        color: 'lime',
+                        fontSize: '1.5em',
+                        zIndex: 1,
+                    }}
+                />
+            )}
             {img ? (
                 <img
                     draggable="false"
