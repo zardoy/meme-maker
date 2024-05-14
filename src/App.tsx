@@ -25,24 +25,20 @@ export default function App() {
                 fontSize: '22px',
                 color: '#ffb503',
                 textShadow: '0 0 5px rgba(0, 0, 0, 0.5)',
-                width: '100vw',
+                // width: '100vw',
                 height: '100dvh',
                 display: 'flex',
                 flexDirection: 'column',
                 // alignItems: 'center',
                 padding: '40px 10px',
                 fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                gap: 20,
+                gap: 15,
             }}
         >
             <h1 style={{ textAlign: 'center', fontFamily: 'Flood Std Regular' }} className="title">
                 {import.meta.env.VITE_APP_NAME}
             </h1>
-            <div
-                style={{
-                    height: '100%',
-                }}
-            >
+            <div>
                 <PictureControls />
             </div>
             <Pickers />
@@ -72,7 +68,9 @@ const Pickers = () => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', width: '100%' }}>
-            <Tabs tabs={tabs} selected={tab} changeSelected={setTab} />
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <Tabs tabs={tabs} selected={tab} changeSelected={setTab} />
+            </div>
             {currentAssets && <PicturesPicker name={currentAssets.category} urls={currentAssets.urls} />}
         </div>
     )
@@ -250,7 +248,7 @@ const PictureControls = () => {
 
 const Tabs = ({ tabs, selected, changeSelected }) => {
     return (
-        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 0', width: '100%' }}>
+        <div style={{ display: 'flex', gap: 0, overflow: 'auto', padding: '10px 0' }}>
             {tabs.map((tab, i, tabs) => {
                 const isFirst = tab === tabs[0]
                 const isLast = tab === tabs[tabs.length - 1]
