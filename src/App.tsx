@@ -9,14 +9,13 @@ import mdiContentCopy from '@iconify-icons/mdi/content-copy'
 import mdiRestart from '@iconify-icons/mdi/restart'
 import mdiBlock from '@iconify-icons/mdi/block'
 import mdiSelect from '@iconify-icons/mdi/check-bold'
+import mdiLink from '@iconify-icons/mdi/link'
 import { proxy, useSnapshot } from 'valtio'
 import { noCase } from 'change-case'
 import assets from './assets.json'
 import { useFloating, arrow, offset, FloatingArrow } from '@floating-ui/react'
 import { randomSuperbWord } from 'superb'
-import { SiX, SiTelegram } from '@icons-pack/react-simple-icons'
-import DextoolsLogo from './dextools.svg?react'
-import ImageDexscreener from './dexscreener.png'
+import LinksModal, { appLinks, modalState } from './LinksModal'
 
 const selectedAssets = proxy(Object.fromEntries(assets.map(k => [k.category, undefined]))) as Record<string, string | undefined>
 let lastRenderedCanvas = null as HTMLCanvasElement | null
@@ -53,7 +52,7 @@ export default function App() {
                 className="title"
             >
                 {import.meta.env.VITE_APP_NAME}
-                <div style={{ display: 'inline-flex', gap: 10, fontSize: '17px', alignItems: 'center', fontFamily: 'monospace' }}>
+                <div style={{ display: 'inline-flex', gap: 10, fontSize: '20px', alignItems: 'center', fontFamily: 'monospace' }}>
                     <span
                         onClick={e => {
                             // copy contents
@@ -67,28 +66,28 @@ export default function App() {
                     >
                         3JRTNF3WuoxK4CLTE6KC5X8iDyoJEkBBUFBq4xz7yW1w
                     </span>
-                    <Link icon href={'https://x.com/DogMemeToken?t=Srudx5CHz2awSHN296IseA&s=35'} title="X">
-                        <SiX />
-                    </Link>
-                    <Link icon href={'https://t.me/Dogtokenmeme'} title="Telegram">
-                        <SiTelegram />
-                    </Link>
-                    <Link icon href={'https://dexscreener.com/solana/dq37wwgg5lvxk2ohpa7styq8pc7dyddtquxysw3d2bho'} title="Dexscreener">
-                        <img src={ImageDexscreener} />
-                    </Link>
-                    <Link
-                        icon
-                        href={'https://www.dextools.io/app/en/solana/pair-explorer/Dq37wwgg5LvXk2oHpA7sTyQ8pc7DyddTquXysw3D2BHo?t=1715715809486'}
-                        title="Dextools"
+                    <div style={{ display: 'contents' }} className="hide-mobile">
+                        {appLinks.map((link, index) => (
+                            <Link key={index} icon href={link.href} title={link.title}>
+                                {link.icon}
+                            </Link>
+                        ))}
+                    </div>
+                    <div
+                        className="only-mobile"
+                        onClick={() => {
+                            modalState.state = true
+                        }}
                     >
-                        <DextoolsLogo />
-                    </Link>
+                        <Icon icon={mdiLink} style={{ color: 'white' }} fontSize={'39px'} />
+                    </div>
                 </div>
             </h1>
             <div>
                 <PictureControls />
             </div>
             <Pickers />
+            <LinksModal />
         </div>
     )
     // return <>
@@ -522,7 +521,7 @@ const Button = ({ icon, itemRef, rootRef, disabled, ...props }: ComponentProps<t
                 justifyContent: 'center',
                 alignItems: 'center',
                 padding: '10px 20px',
-                backgroundColor: 'rgb(242 0 255)',
+                backgroundColor: 'rgb(217 0 229)',
                 border: '2px solid currentColor',
                 borderRadius: 5,
                 textTransform: 'uppercase',
